@@ -7,17 +7,19 @@
 //
 
 import UIKit
+import CoreData
 
-class TodoListViewController: UITableViewController{
+class TodoListViewController: UITableViewController {
 
     var itemsArray = [Item]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     // MARK: viewDidLoad()
-    
-    
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         
         loadItems()
@@ -50,6 +52,9 @@ class TodoListViewController: UITableViewController{
         
         itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
         
+//        context.delete(itemsArray[indexPath.row])
+//        itemsArray.remove(at: indexPath.row)
+        
         saveItems()
         
         tableView.reloadData()
@@ -70,7 +75,11 @@ class TodoListViewController: UITableViewController{
             
                 guard let textFieldText = textField.text else {return}
                 
-                let newItem = Item(title: textFieldText)
+                
+                
+                let newItem = Item(context: self.context)
+                newItem.title = textFieldText
+                newItem.done = false
 
                 self.itemsArray.append(newItem)
             
@@ -101,31 +110,69 @@ class TodoListViewController: UITableViewController{
     // MARK: Save Data Method
     
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        
         do {
-            
-            let data = try encoder.encode(itemsArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
             
         } catch {
-            
-            print("Error encoding item array, \(error)")
-            
+            print("Failed saving: \(error)")
         }
+        
+        tableView.reloadData()
+        
     }
     
-    func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+        // (with request: NSFetchRequest<Item> = Item.fetchRequest()) provides
+        // default value so that if no input is given it has a go to value.
+        // This makes a uqnique parameter optional
+        
+        
+//        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        do {
+            itemsArray = try context.fetch(request)
+        } catch {
+            print("Failed loading data \(error)")
             
-            do {
-                itemsArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding item Array \(error)")
-            }
         }
+        
+        tableView.reloadData()
     }
     
 }
 
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+//        let request : NSFetchRequest<Item> = Item.fetchRequest()
+//
+//        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+//
+//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+//
+//        loadItems(with: request)
+        
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            
+            
+        } else {
+            let request : NSFetchRequest<Item> = Item.fetchRequest()
+
+            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+
+            loadItems(with: request)
+        }
+    }
+    
+
+}

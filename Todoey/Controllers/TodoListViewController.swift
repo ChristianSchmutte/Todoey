@@ -15,6 +15,12 @@ class TodoListViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
+    var selectedCategory: Catagory? {
+        didSet {
+            loadItems()
+        }
+    }
+    
     // MARK: viewDidLoad()
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,7 +28,6 @@ class TodoListViewController: UITableViewController {
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         
-        loadItems()
         
         
     }
@@ -80,6 +85,7 @@ class TodoListViewController: UITableViewController {
                 let newItem = Item(context: self.context)
                 newItem.title = textFieldText
                 newItem.done = false
+                newItem.parentCategory = self.selectedCategory!
 
                 self.itemsArray.append(newItem)
             

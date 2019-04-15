@@ -11,7 +11,7 @@ import CoreData
 
 class CategoryTableViewController: UITableViewController {
     
-    var categories = [Catagory]()
+    var categories = [Category]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     
@@ -36,7 +36,7 @@ class CategoryTableViewController: UITableViewController {
         
     }
     
-    func loadCategories(with request: NSFetchRequest<Catagory> = Catagory.fetchRequest()) {
+    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
         
         do {
             categories = try context.fetch(request)
@@ -95,7 +95,7 @@ class CategoryTableViewController: UITableViewController {
             
             guard let textFieldText = textField.text else {return}
             
-            let newCategory = Catagory(context: self.context)
+            let newCategory = Category(context: self.context)
             newCategory.name = textFieldText
             
             self.categories.append(newCategory)

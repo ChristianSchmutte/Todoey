@@ -15,7 +15,7 @@ class TodoListViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
-    var selectedCategory: Catagory? {
+    var selectedCategory: Category? {
         didSet {
             loadItems()
         }
@@ -127,13 +127,16 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
-        // (with request: NSFetchRequest<Item> = Item.fetchRequest()) provides
-        // default value so that if no input is given it has a go to value.
-        // This makes a uqnique parameter optional
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+
         
-        
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         
         do {
             itemsArray = try context.fetch(request)
@@ -150,13 +153,7 @@ class TodoListViewController: UITableViewController {
 extension TodoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//
-//        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        loadItems(with: request)
+        
         
     }
     
@@ -170,13 +167,17 @@ extension TodoListViewController: UISearchBarDelegate {
             
             
         } else {
-            let request : NSFetchRequest<Item> = Item.fetchRequest()
+            let searchRequest : NSFetchRequest<Item> = Item.fetchRequest()
+            
 
-            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            
+            let searchPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            
 
-            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            searchRequest.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            
 
-            loadItems(with: request)
+            loadItems(with: searchRequest, predicate: searchPredicate)
         }
     }
     

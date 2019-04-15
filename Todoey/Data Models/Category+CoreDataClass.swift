@@ -1,5 +1,5 @@
 //
-//  Catagory+CoreDataClass.swift
+//  Category+CoreDataClass.swift
 //  Todoey
 //
 //  Created by Christian Schmutte on 14.04.19.
@@ -10,7 +10,7 @@
 import Foundation
 import CoreData
 
-@objc(Catagory)
-public class Catagory: NSManagedObject {
+@objc(Category)
+public class Category: NSManagedObject {
 
 }

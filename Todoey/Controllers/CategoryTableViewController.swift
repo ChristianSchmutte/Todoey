@@ -7,22 +7,22 @@
 //
 
 import UIKit
-import CoreData
 import RealmSwift
+import ChameleonFramework
 
-class CategoryTableViewController: UITableViewController {
+class CategoryTableViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     
     var categories: Results<Category>?
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
         loadCategories()
-
+        tableView.rowHeight = 80.0
+        tableView.separatorStyle = .none
+        
     }
     
     
@@ -46,7 +46,40 @@ class CategoryTableViewController: UITableViewController {
         
         tableView.reloadData()
     }
-
+    
+    // MARK: - Delete Data From Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        if let categoryForDeletion = self.categories?[indexPath.row]{
+            super.updateModel(at: indexPath)
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryForDeletion.items)
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting catgegory, \(error)")
+            }
+            
+        }
+    }
+    
+    // MARK: - CHALLENGE: Store random colors
+    
+    /*
+     Chameleon framework can put out and take in hex values.
+     The task is to give the categories a color string property
+     which will be generated randomly while creating the object.
+     Therefore:
+     1. Go through documentation how to GENERATE hex string
+     2. Go through documentation how to IMPLEMENT hex string to get same color
+     3. Edit data model to have property of hex color string
+     4. edit cellForRowAt so that cell background gets categories color
+     5. BONUS: use catorgories color to use it for todos to have a fade
+        of the same color of the categorie.
+     
+     
+     */
 
     // MARK: - TableView Datasource Methods
     
@@ -56,14 +89,21 @@ class CategoryTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: "goToItems")
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+
         
+        if let loadedCategory = categories?[indexPath.row] {
+            cell.textLabel?.text = loadedCategory.name
+            guard let bgColor = UIColor(hexString: loadedCategory.colorHex) else {fatalError("Could not create color from hex string")}
+            cell.backgroundColor = bgColor
+            cell.textLabel?.textColor = ContrastColorOf(bgColor, returnFlat: true)
+            
+        }
         
         return cell
     }
     
-    // MARK: - TODO: TableView Datasource Methods
+    // MARK: - TODO: TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
@@ -96,7 +136,7 @@ class CategoryTableViewController: UITableViewController {
             
             let newCategory = Category()
             newCategory.name = textFieldText
-            
+            newCategory.colorHex = UIColor.randomFlat.hexValue()
             
             self.save(category: newCategory)
             self.tableView.reloadData()
@@ -110,3 +150,5 @@ class CategoryTableViewController: UITableViewController {
     
     
 }
+
+// MARK: - Swipe Cell Delegate Methods
